@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 absl-py = "*"
 click = "*"
+python-dotenv = "*"
+requests = "*"
+inquirer = "*"
 
 [dev-packages]
 
