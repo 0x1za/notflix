@@ -9,6 +9,7 @@ click = "*"
 python-dotenv = "*"
 requests = "*"
 inquirer = "*"
+google-api-python-client = "*"
 
 [dev-packages]
 

@@ -44,14 +44,13 @@ def app(title):
     exists = search_database(movie["imdbID"], "IMDb ID")["results"]
 
     if len(exists) == 0:
-        logging.info('Adding movie ' + movie['Title'] + ' to Notion...')
         create_notion_entry(movie)
-        logging.info("Done...")
     elif len(exists) == 1:
         logging.warning('Skipping, entry already exists in database.')
     else:
         logging.fatal(
             "Something went wrong... extry might already exist in database")
+    return None
 
 
 def search_database(query, key):
