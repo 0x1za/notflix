@@ -3,6 +3,7 @@ import json
 import click
 import requests
 import inquirer
+import sentry_sdk
 
 from absl import logging
 from dotenv import load_dotenv
@@ -11,6 +12,13 @@ load_dotenv()  # take environment variables from .env.
 
 # Code of your application, which uses environment variables (e.g. from `os.environ` or
 # `os.getenv`) as if they came from the actual environment.
+sentry_sdk.init(
+    os.getenv("SENTRY_DSN"),
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0)
 
 
 @click.command()

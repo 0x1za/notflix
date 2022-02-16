@@ -10,6 +10,7 @@ python-dotenv = "*"
 requests = "*"
 inquirer = "*"
 google-api-python-client = "*"
+sentry-sdk = "*"
 
 [dev-packages]
 
