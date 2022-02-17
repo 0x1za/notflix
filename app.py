@@ -32,32 +32,37 @@ def app(title):
     results = omdb_get_movie(title)
     imdb_ids = json_extract(results, "imdbID")
 
-    titles = merge_titles(
-        json_extract(results, "Title"),
-        json_extract(results, "Year"),
-        json_extract(results, "Type"),
-    )
+    if results["Response"] != "False":
+        titles = merge_titles(
+            json_extract(results, "Title"),
+            json_extract(results, "Year"),
+            json_extract(results, "Type"),
+        )
 
-    questions = [
-        inquirer.List(
-            "movie",
-            message="Select movie from search results...",
-            choices=results_tuple(titles, imdb_ids),
-        ),
-    ]
-    answers = inquirer.prompt(questions)
-    movie = omdb_get_movie(answers["movie"], by_id=True)
+        questions = [
+            inquirer.List(
+                "movie",
+                message="Select movie from search results...",
+                choices=results_tuple(titles, imdb_ids),
+            ),
+        ]
+        answers = inquirer.prompt(questions)
+        movie = omdb_get_movie(answers["movie"], by_id=True)
 
-    # Check if movie is already in Notion database table.
-    exists = search_database(movie["imdbID"], "IMDb ID")["results"]
+        # Check if movie is already in Notion database table.
+        exists = search_database(movie["imdbID"], "IMDb ID")["results"]
 
-    if len(exists) == 0:
-        create_notion_entry(movie)
-    elif len(exists) == 1:
-        logging.warning('Skipping, entry already exists in database.')
+        if len(exists) == 0:
+            create_notion_entry(movie)
+        elif len(exists) == 1:
+            logging.warning('Skipping, entry already exists in database.')
+        else:
+            logging.fatal(
+                "Something went wrong... extry might already exist in database"
+            )
     else:
-        logging.fatal(
-            "Something went wrong... extry might already exist in database")
+        logging.warning("Results list is empty, exiting")
+
     return None
 
 
