@@ -32,32 +32,37 @@ def app(title):
     results = omdb_get_movie(title)
     imdb_ids = json_extract(results, "imdbID")
 
-    titles = merge_titles(
-        json_extract(results, "Title"),
-        json_extract(results, "Year"),
-        json_extract(results, "Type"),
-    )
+    if results["Response"] != "False":
+        titles = merge_titles(
+            json_extract(results, "Title"),
+            json_extract(results, "Year"),
+            json_extract(results, "Type"),
+        )
 
-    questions = [
-        inquirer.List(
-            "movie",
-            message="Select movie from search results...",
-            choices=results_tuple(titles, imdb_ids),
-        ),
-    ]
-    answers = inquirer.prompt(questions)
-    movie = omdb_get_movie(answers["movie"], by_id=True)
+        questions = [
+            inquirer.List(
+                "movie",
+                message="Select movie from search results...",
+                choices=results_tuple(titles, imdb_ids),
+            ),
+        ]
+        answers = inquirer.prompt(questions)
+        movie = omdb_get_movie(answers["movie"], by_id=True)
 
-    # Check if movie is already in Notion database table.
-    exists = search_database(movie["imdbID"], "IMDb ID")["results"]
+        # Check if movie is already in Notion database table.
+        exists = search_database(movie["imdbID"], "IMDb ID")["results"]
 
-    if len(exists) == 0:
-        create_notion_entry(movie)
-    elif len(exists) == 1:
-        logging.warning('Skipping, entry already exists in database.')
+        if len(exists) == 0:
+            create_notion_entry(movie)
+        elif len(exists) == 1:
+            logging.warning('Skipping, entry already exists in database.')
+        else:
+            logging.fatal(
+                "Something went wrong... extry might already exist in database"
+            )
     else:
-        logging.fatal(
-            "Something went wrong... extry might already exist in database")
+        logging.warning("Results list is empty, exiting")
+
     return None
 
 
@@ -137,7 +142,7 @@ def create_notion_entry(data):
             },
             "Star Rating": {
                 "select": {
-                    "name": metascore_to_stars(int(data["Metascore"]))
+                    "name": score_to_stars(data["imdbRating"])
                 }
             }
         }
@@ -150,22 +155,29 @@ def create_notion_entry(data):
 
     response = requests.request("POST", url, headers=headers, data=payload)
 
-    print(response.status_code)
     return response.status_code
 
 
-def metascore_to_stars(score):
+def score_to_stars(score):
+    # Score based on IMDb rating system.
     stars = None
-    if score in range(0, 20):
-        stars = "⭐"
-    elif score in range(20, 40):
-        stars = "⭐⭐"
-    elif score in range(40, 61):
-        stars = "⭐⭐⭐"
-    elif score in range(61, 81):
-        stars = "⭐⭐⭐⭐"
-    elif score in range(81, 101):
-        stars = "⭐⭐⭐⭐⭐"
+
+    if score != "N/A":
+        score = float(
+            score
+        ) / 2  # Divide score, IMDb rating is out of 10, convert to 5 stars
+        if min(0, 1) < score < max(0, 1):
+            stars = "⭐"
+        elif min(1, 2) < score < max(1, 2):
+            stars = "⭐⭐"
+        elif min(2, 3.1) < score < max(2, 3.1):
+            stars = "⭐⭐⭐"
+        elif min(3, 4) < score < max(3, 4):
+            stars = "⭐⭐⭐⭐"
+        elif min(4, 5) < score < max(4, 5):
+            stars = "⭐⭐⭐⭐⭐"
+    else:
+        stars = score
 
     return stars
 
